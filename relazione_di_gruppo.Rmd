@@ -60,7 +60,23 @@ I sensori utilizzati per realizzare questo circuito sono tre: due sensori di pre
 
 ## Sensore di pressione
 
-## Sensore a ultrasuoni
+
+
+## Sensore a ultrasuoni *HC-SR04*
+Il sensore a ultrasuoni è un componente con quattro *pin* così chiamati:
+- $V_{CC}$
+- Trig
+- Echo
+- GND
+
+Il primo e l'ultimo riguardano la tensione di alimentazione (rispettivamente $5V$ e massa), il trigger è responsabile dell'impulso da inviare verso l'esterno per intercettare eventuali ostacoli, l'echo invece tiene conto del tempo che trascorre tra l'inviio del segnale e il suo ritorno.
+
+Seguendo i dati del *data-sheet* questo sensore per funzionare ha bisogno di ricevere un impulso di circa $10\mu s$ per poter funzionare (questo impulso deve essere fornito esternamente, non lo crea da sé), quest'ultimo viene inviato dall'emettitore sotto forma di onda sonora quadra da 8 cicli a circa $40kHz$ (non udibile dall'essere umano). A questo punto il *pin* *echo* genera una tensione al livello logico alto finché il ricevitore non rileva l'impulso di ritorno, dopo di ché torna al livello basso. Più vicino è l'oggetto e più breve è la durata del segnale alla tensione alta generato dall'*echo*, questo perché la differenza tra l'istante in cui l'impulso viene mandato dall'emettitore e quello in cui viene ricevuto è più piccola.
+
+```{r pulse_echo, fig.cap="impulsi del sensore a ultrasuoni"}
+knitr::include_graphics("immagini/impulsi sensore ultrasuoni.png")
+```
+
 
 # Circuito realizzato
 
