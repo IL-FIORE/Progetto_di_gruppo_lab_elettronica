@@ -56,4 +56,9 @@ knitr::opts_chunk$set(
 
 # Circuito realizzato
 
+```{r}
+knitr::include_graphics("immagini/circuito completo spiegato di gruppo.png")
+```
+
+
 
