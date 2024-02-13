@@ -1,0 +1,54 @@
+---
+title: \textbf{Relazione di gruppo}
+author: "Mattia Fiorentino e Giambattista Donati"
+subtitle: |
+  | Dipartimento di Ingegneria Industriale
+  | Laboratorio di elettronica per la robotica
+date: "`r format(Sys.time(), '%d-%m-%Y')`"
+output: pdf_document
+classoption: a4paper
+number_sections: true
+libertine: false
+toc: true
+lof: true
+lot: false
+header-includes:
+  - \usepackage{titling}
+  - \pretitle{\begin{center}
+    \includegraphics[width=2in,height=2in]{unitn_logo.pdf}\Huge\\\vspace{0.5cm}}
+  - \posttitle{\end{center}\large\vspace{0.5cm}}
+  #- \rhead{\includegraphics[width = .05\textwidth]{unitn_logo.pdf}}
+  
+  - \usepackage[italian]{babel}
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(knitr)
+library(kableExtra)
+library(tidyverse)
+library(memor)
+library(patchwork)
+library(latex2exp)
+library(ggplot2)
+library(modelr)
+library(dplyr)
+library(ggExtra)
+library(boot)
+library(outliers)
+# Impostazioni output
+knitr::opts_chunk$set(
+	fig.align  = "center",        # allineamento figure
+	fig.dim    = c(5, 3) * 1.2, # rapporto larghezza/altezza e fattore di scala
+	#fig.show   = 'hold',
+	#results    = 'hold',
+	out.height = "2.8in",       # altezza effettiva figure
+	message    = FALSE,         # sopprimi messaggi
+	warning    = FALSE,         # sopprimi warning
+	echo       = FALSE,          # mostra i codice dei chunk
+	include    = TRUE,          # mostra l'output dei chunk
+	tidy       = TRUE,          # formatta il codice dei chunk
+  tidy.opts  = list(width.cutoff=I(60)) # massima larghezza codice nei chunk
+)
+```
