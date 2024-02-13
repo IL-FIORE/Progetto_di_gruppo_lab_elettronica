@@ -53,6 +53,14 @@ knitr::opts_chunk$set(
 )
 ```
 
+# Introduzione
+
+Con il circuito costruito l'obiettivo è quello di simulare un motore di una macchina capace di accelerare e di frenare, rispetto ad una velocità costante a vuoto, con due pedali, e, in caso di avvicinamento di un ostacolo, di rallentare fino ad arrestarsi quando questo è molto vicino.
+I sensori utilizzati per realizzare questo circuito sono tre: due sensori di pressione e un sensore a ultrasuoni. I primi due dovrebbero fungere da pedali, mentre il terzo da sensore di prossimità.
+
+## Sensore di pressione
+
+## Sensore a ultrasuoni
 
 # Circuito realizzato
 
@@ -60,5 +68,5 @@ knitr::opts_chunk$set(
 knitr::include_graphics("immagini/circuito completo spiegato di gruppo.png")
 ```
 
-
+Il ragionamento alla base del circuito sta nell'alimentare il motore con una tensione media che varia in funzione della tensione all'uscita dei sensori.
 
