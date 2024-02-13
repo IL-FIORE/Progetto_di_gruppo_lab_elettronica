@@ -52,3 +52,8 @@ knitr::opts_chunk$set(
   tidy.opts  = list(width.cutoff=I(60)) # massima larghezza codice nei chunk
 )
 ```
+
+
+# Circuito realizzato
+
+
