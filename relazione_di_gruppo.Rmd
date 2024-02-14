@@ -15,7 +15,7 @@ lot: false
 header-includes:
   - \usepackage{titling}
   - \pretitle{\begin{center}
-    \includegraphics[width=2in,height=2in]{unitn_logo.pdf}\Huge\\\vspace{0.5cm}}
+    \includegraphics[width=2in,height=2in]{immagini/unitn_logo.pdf}\Huge\\\vspace{0.5cm}}
   - \posttitle{\end{center}\large\vspace{0.5cm}}
   #- \rhead{\includegraphics[width = .05\textwidth]{unitn_logo.pdf}}
   
@@ -56,33 +56,91 @@ knitr::opts_chunk$set(
 # Introduzione
 
 Con il circuito costruito l'obiettivo è quello di simulare un motore di una macchina capace di accelerare e di frenare, rispetto ad una velocità costante a vuoto, con due pedali, e, in caso di avvicinamento di un ostacolo, di rallentare fino ad arrestarsi quando questo è molto vicino.
-I sensori utilizzati per realizzare questo circuito sono tre: due sensori di pressione e un sensore a ultrasuoni. I primi due dovrebbero fungere da pedali, mentre il terzo da sensore di prossimità.
+I sensori utilizzati per realizzare questo circuito sono tre: due sensori di pressione e un sensore a ultrasuoni. I primi fungono da pedali, mentre il terzo da sensore di prossimità.
 
-## Sensore di pressione
+## Sensore di pressione *RP-C7.6-ST*
+I due sensori utilizzati in questo circuito sono entrambi due *RP-C7.6-ST*. Questo tipo di sensore permette di determinare la forza esercitata su di esso conoscendo la sua resistenza. Man mano che la forza aumenta infatti la resistenza ai capi del sensore diminuisce. La funzione che meglio approssima l'effettiva relazione tra forza e resistenza è questa:
+$$
+  R = \frac{336.04}{F^{0.721}} 
+$$
+come raffigurato nella regressione del *data-sheet* in Fig.\ref{fig:regressione}.
 
+```{r regressione, fig.cap="Regressione del sensore *RP-C7.6-ST*"}
+knitr::include_graphics("immagini/regressione sensore di pressione.png")
+```
 
 
 ## Sensore a ultrasuoni *HC-SR04*
 Il sensore a ultrasuoni è un componente con quattro *pin* così chiamati:
+
 - $V_{CC}$
 - Trig
 - Echo
 - GND
 
-Il primo e l'ultimo riguardano la tensione di alimentazione (rispettivamente $5V$ e massa), il trigger è responsabile dell'impulso da inviare verso l'esterno per intercettare eventuali ostacoli, l'echo invece tiene conto del tempo che trascorre tra l'inviio del segnale e il suo ritorno.
+Il primo e l'ultimo riguardano la tensione di alimentazione (rispettivamente $5V$ e massa), il trigger è responsabile dell'impulso da inviare verso l'esterno per intercettare eventuali ostacoli, l'echo invece tiene conto del tempo che trascorre tra l'invio del segnale e il suo ritorno.
 
-Seguendo i dati del *data-sheet* questo sensore per funzionare ha bisogno di ricevere un impulso di circa $10\mu s$ per poter funzionare (questo impulso deve essere fornito esternamente, non lo crea da sé), quest'ultimo viene inviato dall'emettitore sotto forma di onda sonora quadra da 8 cicli a circa $40kHz$ (non udibile dall'essere umano). A questo punto il *pin* *echo* genera una tensione al livello logico alto finché il ricevitore non rileva l'impulso di ritorno, dopo di ché torna al livello basso. Più vicino è l'oggetto e più breve è la durata del segnale alla tensione alta generato dall'*echo*, questo perché la differenza tra l'istante in cui l'impulso viene mandato dall'emettitore e quello in cui viene ricevuto è più piccola.
+Seguendo i dati del *data-sheet* questo sensore per funzionare ha bisogno di ricevere un impulso di circa $10\mu s$ (questo deve essere fornito esternamente, non lo crea da sé), e viene inviato dall'emettitore sotto forma di onda quadra sonora da 8 cicli a circa $40kHz$ (non udibile dall'essere umano). A questo punto il *pin* *echo* commuta ad una tensione al livello logico alto finché il ricevitore non rileva l'impulso di ritorno, dopo di ché torna al livello basso. Più vicino è l'oggetto e più breve è la durata del segnale alla tensione alta generato dall'*echo*, questo perché la differenza tra l'istante in cui l'impulso viene mandato dall'emettitore e quello in cui viene ricevuto è più piccola.
 
-```{r pulse_echo, fig.cap="impulsi del sensore a ultrasuoni"}
+```{r pulse_echo, fig.cap="Impulsi del sensore a ultrasuoni"}
 knitr::include_graphics("immagini/impulsi sensore ultrasuoni.png")
 ```
 
+L'impulso di circa $10\mu s$ è generato dal circuito integrato n°5 (questi numeri sono relativi alla Fig.\ref{fig:circ_tot}), un multivibratore astabile che tuttavia non può scendere sotto il $50\%$ di *duty-cycle*, quindi per generare degli impulsi sufficientemente distanti tra loro basta creare un'onda quadra con un *duty-cycle* elevato per poi negarla (in Fig.\ref{fig:pulse_trig} è rappresentato lo schema del circuito insieme alla una porta NAND del *74HC00* n°7).  
+
+```{r pulse_trig, fig.cap="Schema del generatore impulsi"}
+knitr::include_graphics("immagini/impulsi trig.png")
+```
 
 # Circuito realizzato
 
-```{r}
-knitr::include_graphics("immagini/circuito completo spiegato di gruppo.png")
+```{r circ_tot, fig.cap="Circuito completo", out.height="20cm"}
+knitr::include_graphics("immagini/circuito completo con nome.png")
 ```
 
-Il ragionamento alla base del circuito sta nell'alimentare il motore con una tensione media che varia in funzione della tensione all'uscita dei sensori.
+Il ragionamento alla base del circuito sta nell'alimentare il motore con una tensione media che varia in funzione della tensione all'uscita dei sensori. Uno dei modi per ottenere questo risultato è tramite *PWM* (*Pulse with modulation*) con l'*NE555*.
+Guardando la Fig.\ref{fig:schema_PWM}, che schematizza l'IC n°4 della Fig.\ref{fig:circ_tot}, si osserva che modificando la resistenza variabile (chiamata *psensor2*, ossia la resistenza del sensore di pressione) cambia la tensione $V_{acc}$ comune al *control voltage*. Fornendo un'onda quadra al *trig* del circuito integrato, e quindi cambiando la resistenza del sensore, si otterrà un'onda quadra con *duty-cycle* variabile. Più precisamente quando viene premuto il sensore, e quindi quando la resistenza diminuisce e $V_{acc}$ aumenta, cresce il *duty-cycle*. Questa funzione è perfetta per l'acceleratore (in quanto aumentando il *duty-cycle* aumenta la tensione media), ma il freno funziona al contrario, per questo servono due *NE555* (montati allo stesso modo) per i due sensori di pressione, cosicché per il freno basterà negare l'uscita per ottenere la funzione desiderata. L'integrato n°2 è quello che realizza il PWM per il freno. Inviare il segnale in uscita dall'*NE555* direttamente alla porta logica però, a causa dell'elevata impedenza in uscita, riduce l'ampiezza del segnale, perciò per evitare questo problema è stato montato un buffer con il circuito integrato *MCP6292*, in Fig.\ref{fig:circ_tot} è la parte sinistra del numero 3.
+
+```{r schema_PWM, fig.cap = "Generatore PWM acceleratore"}
+knitr::include_graphics("immagini/schema PWM acceleratore.png")
+```
+
+Entrambi i circuiti integrati hanno però bisogno di un *clock* in *input* al trigger, e questo viene realizzato dal primo circuito integrato, di nuovo un multivibratore astabile con l'*NE555*, il cui schema è rappresentato in Fig.\ref{fig:schema_clock}, il clock in uscita da questo integrato è riportato in Fig.\ref{fig:clock}.
+
+```{r schema_clock, fig.cap = "Generatore clock per gli NE555"}
+knitr::include_graphics("immagini/schema NE555 clock.png")
+```
+
+```{r clock, fig.cap = "Generatore clock per gli NE555", fig.width = "15cm"}
+knitr::include_graphics("immagini/clock per NE555.png")
+```
+
+Per ridurre la velocità del motore quando un oggetto si avvicina al sensore ad ultrasuoni, invece, la questione è meno complicata. Come spiegato nel capitolo precedente, dal *pin echo* vengono generati degli impulsi più o meno lunghi, a seconda della distanza dell'oggetto. Quando questo è molto vicino, l'onda risultante, nel suo insieme, avrà un *duty-cycle* più vicino a $0\%$, quindi con tensione media molto bassa, come in Fig.\ref{fig:PWM ultrasuoni}. 
+
+```{r PWM_ultrasuoni, fig.cap="PWM sensore ultrasuoni con mano vicina"}
+knitr::include_graphics("immagini/PWM sensore ultrasuoni con mano vicina.png")
+```
+
+Affinché il motore possa rallentare sia nel caso in cui venga premuto il sensore di pressione, e sia nel caso in cui si avvicini un ostacolo al sensore a ultrasuoni è possibile effettuare un *AND* tra i due PWM. In tal modo quando almeno uno dei due sensori si attiva il PWM risultante ha un *duty-cycle* più piccolo.
+
+```{r PWM_freno, fig.cap = "Schema realizzazione PWM del freno"}
+knitr::include_graphics("immagini/AND PWM freno.png")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
