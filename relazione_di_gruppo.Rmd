@@ -40,9 +40,9 @@ library(outliers)
 # Impostazioni output
 knitr::opts_chunk$set(
 	fig.align  = "center",        # allineamento figure
-	fig.dim    = c(5, 3) * 1.2, # rapporto larghezza/altezza e fattore di scala
-	#fig.show   = 'hold',
-	#results    = 'hold',
+	fig.dim    = c(5, 3) * 1, # rapporto larghezza/altezza e fattore di scala
+	fig.show   = 'asis',
+	results    = 'hold',
 	out.height = "2.8in",       # altezza effettiva figure
 	message    = FALSE,         # sopprimi messaggi
 	warning    = FALSE,         # sopprimi warning
@@ -82,13 +82,13 @@ Il primo e l'ultimo riguardano la tensione di alimentazione (rispettivamente $5V
 
 Seguendo i dati del *data-sheet* questo sensore per funzionare ha bisogno di ricevere un impulso di circa $10\mu s$ (questo deve essere fornito esternamente, non lo crea da sé), e viene inviato dall'emettitore sotto forma di onda quadra sonora da 8 cicli a circa $40kHz$ (non udibile dall'essere umano). A questo punto il *pin* *echo* commuta ad una tensione al livello logico alto finché il ricevitore non rileva l'impulso di ritorno, dopo di ché torna al livello basso. Più vicino è l'oggetto e più breve è la durata del segnale alla tensione alta generato dall'*echo*, questo perché la differenza tra l'istante in cui l'impulso viene mandato dall'emettitore e quello in cui viene ricevuto è più piccola.
 
-```{r pulse_echo, fig.cap="Impulsi del sensore a ultrasuoni"}
+```{r pulse_echo, fig.cap="Impulsi del sensore a ultrasuoni", out.width= "60%"}
 knitr::include_graphics("immagini/impulsi sensore ultrasuoni.png")
 ```
 
 L'impulso di circa $10\mu s$ è generato dal circuito integrato n°5 (questi numeri sono relativi alla Fig.\ref{fig:circ_tot}), un multivibratore astabile che tuttavia non può scendere sotto il $50\%$ di *duty-cycle*, quindi per generare degli impulsi sufficientemente distanti tra loro basta creare un'onda quadra con un *duty-cycle* elevato per poi negarla (in Fig.\ref{fig:pulse_trig} è rappresentato lo schema del circuito insieme alla una porta NAND del *74HC00* n°7).  
 
-```{r pulse_trig, fig.cap="Schema del generatore impulsi"}
+```{r pulse_trig, fig.cap="Schema del generatore impulsi", out.width = "50%"}
 knitr::include_graphics("immagini/impulsi trig.png")
 ```
 
@@ -116,11 +116,11 @@ Per ridurre la velocità del motore quando un oggetto si avvicina al sensore ad 
 Affinché il motore possa rallentare sia nel caso in cui venga premuto il sensore di pressione, e sia nel caso in cui si avvicini un ostacolo al sensore a ultrasuoni è possibile effettuare un *AND* tra i due *PWM*. In tal modo quando almeno uno dei due sensori si attiva il *PWM* risultante ha un *duty-cycle* più piccolo.
 In Fig.\ref{fig:PWM_freno_tot} è raffigurato lo schema del circuito del freno corrispondente all'integrato numero 2)
 
-```{r PWM_freno, fig.cap = "Schema realizzazione PWM del freno"}
+```{r PWM_freno, fig.cap = "Schema realizzazione PWM del freno", out.width = "60%"}
 knitr::include_graphics("immagini/AND PWM freno.png")
 ```
 
-```{r PWM_ultrasuoni, fig.cap="PWM sensore ultrasuoni con mano vicina"}
+```{r PWM_ultrasuoni, fig.cap="PWM sensore ultrasuoni con mano vicina", out.width = "50%"}
 knitr::include_graphics("immagini/PWM sensore ultrasuoni con mano vicina.png")
 ```
 
@@ -131,15 +131,12 @@ knitr::include_graphics("immagini/schema PWM freno totale.png")
 
 ## Clock per gli NE555
 
-Entrambi i circuiti integrati hanno però bisogno di un *clock* in *input* al trigger, e questo viene realizzato dal primo circuito integrato, di nuovo un multivibratore astabile con l'*NE555*, il cui schema è rappresentato in Fig.\ref{fig:schema_clock}, il clock in uscita da questo integrato è riportato in Fig.\ref{fig:clock}.
+Entrambi i circuiti integrati hanno però bisogno di un *clock* in *input* al trigger, e questo viene realizzato dal primo circuito integrato, di nuovo un multivibratore astabile con l'*NE555*. In Fig.\ref{fig:schema_clock} si riportano lo schema del circuito e il clock generato.
 
-```{r schema_clock, fig.cap = "Generatore clock per gli NE555"}
-knitr::include_graphics("immagini/schema NE555 clock.png")
+```{r schema_clock, fig.cap = "Clock per gli NE555", out.width = "50%"}
+knitr::include_graphics(c("immagini/schema NE555 clock.png","immagini/clock per NE555.png"))
 ```
 
-```{r clock, fig.cap = "Generatore clock per gli NE555", fig.width = "15cm"}
-knitr::include_graphics("immagini/clock per NE555.png")
-```
 
 
 
@@ -149,14 +146,14 @@ knitr::include_graphics("immagini/clock per NE555.png")
 
 Uno degli ultimi passi per far funzionare correttamente il circuito consiste nel selezionare il *PWM* corretto da mandare al *driver* del motore. Questa funzione può essere svolta da un *multiplexer*: un selettore infatti sceglie quale dei due segnali connettere all'uscita, il circuito è realizzato con l'intero IC *74HC00*, ed è schematizzato in Fig.\ref{fig:mux}.
 
-```{r mux, fig.cap = "Schema multiplexer"}
+```{r mux, fig.cap = "Schema multiplexer", out.width = "60%"}
 knitr::include_graphics("immagini/multiplexer.png")
 ```
 Dallo schema si deduce che se il selettore è al livello logico basso allora viene selezionato l'acceleratore, viceversa se il selettore è al livello alto viene selezionato il freno.
 
 Per realizzare questa operazione basta prelevare la tensione $V_{acc}$ dal partitore con il sensore di pressione e passarla attraverso un comparatore (come mostrato in Fig.\ref{fig:comparatore}) con una soglia poco superiore a $V_{CC}/2$ che renda digitale il segnale. In questo modo quando viene premuto il sensore dell'acceleratore $V_{acc}$ cresce e supera la soglia, così, grazie anche al *multiplexer*, il rispettivo *PWM* viene passato al driver. Invece se non viene premuto quel sensore il segnale connesso al driver è di norma quello del freno.
 
-```{r comparatore, fig.cap = "Schema comparatore"}
+```{r comparatore, fig.cap = "Schema comparatore", out.width = "40%"}
 knitr::include_graphics("immagini/comparatore.png")
 ```
 
@@ -165,13 +162,26 @@ knitr::include_graphics("immagini/comparatore.png")
 
 La corrente che necessita il motore DC in questione per funzionare va spesso oltre i $100mA$. Per fornire tale corrente al motore non è sufficiente collegare direttamente il *PWM* finale ad esso, bensì è fondamentale amplificare la corrente. Un metodo per farlo consiste nell'aggiungere dei *transistor darlington* (lo schema è mostrato in Fig.\ref{fig:darlington}) presenti nel circuito integrato *ULN2003A*, corrispondente all'integrato numero 6. Ogni canale di questo pacchetto può amplificare la corrente fino a $300mA$, connettendone due in parallelo quindi si possono raggiungere anche i $600mA$, più che sufficienti per il circuito. 
 
-```{r darlington, fig.cap = "Schema transistor darlington"}
+```{r darlington, fig.cap = "Schema transistor darlington", out.width = "60%"}
 knitr::include_graphics("immagini/darlington.png")
 ```
 
 # Potenza assorbita
 
+```{r gen, fig.cap="Generatore di tensione", out.width = "60%", }
+knitr::include_graphics("immagini/generatore.png")
+```
+
+In quest'immagine vengono misurate tensione, corrente, e potenza, assorbite dal circuito quando il motore lavora in folle. Dal primo canale, in giallo, è fornita la tensione per le componenti elettroniche del circuito, mentre dal secondo canale, in blu, quella per il motore. La corrente del secondo canale in realtà non è costante, questo probabilmente è dato dal fatto che il *PWM* del freno non ha un *duty-cycle* costante proprio per il metodo utilizzato. Tentare di misurare con il multimetro questa corrente sarebbe vano.
+Il massimo valore di corrente osservato, quando viene premuto il pulsante dell'acceleratore, è circa $150mA$, con una potenza corrispondente di circa $750mW$.
+
+I dati misurati con il multimetro del primo generatore risultano molto simili a quelli scritti sul *display* del generatore:
+
+- Tensione: $4.999V$
+- Corrente: $22.9mA$
+- Potenza: $114.5mW$
 
 
 
+ 
 
