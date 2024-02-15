@@ -109,11 +109,12 @@ knitr::include_graphics("immagini/schema PWM acceleratore.png")
 
 ## PWM freno
 
-Per quanto riguarda il freno, invece, è necessaria la funzione opposta, per questo serve un *NE555* separato che possa realizzare il *PWM* con *duty-cycle* decrescente. Il circuito è identico a quello dell'acceleratore, tuttavia in questo caso bisogna negare l'uscita per ottenere la funzione desiderata (in Fig.\ref{fig:schema_freno} è raffigurato lo schema del circuito del freno corrispondente all'integrato numero 2). Inviare il segnale in uscita dall'*NE555* direttamente alla porta logica però, a causa dell'elevata impedenza in uscita, ridurrebbe l'ampiezza del segnale, perciò per evitare questo problema è stato montato un buffer con il circuito integrato *MCP6292*, in Fig.\ref{fig:circ_tot} è la parte sinistra del numero 3.
+Per quanto riguarda il freno, invece, è necessaria la funzione opposta, per questo serve un *NE555* separato che possa realizzare il *PWM* con *duty-cycle* decrescente. Il circuito è identico a quello dell'acceleratore, tuttavia in questo caso bisogna negare l'uscita per ottenere la funzione desiderata. Inviare il segnale in uscita dall'*NE555* direttamente alla porta logica però, a causa dell'elevata impedenza in uscita, ridurrebbe l'ampiezza del segnale, perciò per evitare questo problema è stato montato un buffer con il circuito integrato *MCP6292*, in Fig.\ref{fig:circ_tot} è la parte sinistra del numero 3.
 
 Per ridurre la velocità del motore quando un oggetto si avvicina al sensore ad ultrasuoni, invece, la questione è meno complicata. Come spiegato nel capitolo precedente, dal *pin echo* vengono generati degli impulsi più o meno lunghi, a seconda della distanza dell'oggetto. Quando questo è molto vicino, l'onda risultante, nel suo insieme, avrà un *duty-cycle* più vicino a $0\%$, quindi con tensione media molto bassa, come in Fig.\ref{fig:PWM_ultrasuoni}. 
 
-Affinché il motore possa rallentare sia nel caso in cui venga premuto il sensore di pressione, e sia nel caso in cui si avvicini un ostacolo al sensore a ultrasuoni è possibile effettuare un *AND* tra i due PWM. In tal modo quando almeno uno dei due sensori si attiva il *PWM* risultante ha un *duty-cycle* più piccolo.
+Affinché il motore possa rallentare sia nel caso in cui venga premuto il sensore di pressione, e sia nel caso in cui si avvicini un ostacolo al sensore a ultrasuoni è possibile effettuare un *AND* tra i due *PWM*. In tal modo quando almeno uno dei due sensori si attiva il *PWM* risultante ha un *duty-cycle* più piccolo.
+In Fig.\ref{fig:PWM_freno_tot} è raffigurato lo schema del circuito del freno corrispondente all'integrato numero 2)
 
 ```{r PWM_freno, fig.cap = "Schema realizzazione PWM del freno"}
 knitr::include_graphics("immagini/AND PWM freno.png")
@@ -155,13 +156,18 @@ Dallo schema si deduce che se il selettore è al livello logico basso allora vie
 
 Per realizzare questa operazione basta prelevare la tensione $V_{acc}$ dal partitore con il sensore di pressione e passarla attraverso un comparatore (come mostrato in Fig.\ref{fig:comparatore}) con una soglia poco superiore a $V_{CC}/2$ che renda digitale il segnale. In questo modo quando viene premuto il sensore dell'acceleratore $V_{acc}$ cresce e supera la soglia, così, grazie anche al *multiplexer*, il rispettivo *PWM* viene passato al driver. Invece se non viene premuto quel sensore il segnale connesso al driver è di norma quello del freno.
 
-
+```{r comparatore, fig.cap = "Schema comparatore"}
+knitr::include_graphics("immagini/comparatore.png")
+```
 
 
 ## Driver
 
-La corrente 
+La corrente che necessita il motore DC in questione per funzionare va spesso oltre i $100mA$. Per fornire tale corrente al motore non è sufficiente collegare direttamente il *PWM* finale ad esso, bensì è fondamentale amplificare la corrente. Un metodo per farlo consiste nell'aggiungere dei *transistor darlington* (lo schema è mostrato in Fig.\ref{fig:darlington}) presenti nel circuito integrato *ULN2003A*, corrispondente all'integrato numero 6. Ogni canale di questo pacchetto può amplificare la corrente fino a $300mA$, connettendone due in parallelo quindi si possono raggiungere anche i $600mA$, più che sufficienti per il circuito. 
 
+```{r darlington, fig.cap = "Schema transistor darlington"}
+knitr::include_graphics("immagini/darlington.png")
+```
 
 # Potenza assorbita
 
