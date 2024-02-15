@@ -65,7 +65,7 @@ $$
 $$
 come raffigurato nella regressione del *data-sheet* in Fig.\ref{fig:regressione}.
 
-```{r regressione, fig.cap="Regressione del sensore *RP-C7.6-ST*"}
+```{r regressione, fig.cap="Regressione del sensore RP-C7.6-ST"}
 knitr::include_graphics("immagini/regressione sensore di pressione.png")
 ```
 
@@ -98,12 +98,37 @@ knitr::include_graphics("immagini/impulsi trig.png")
 knitr::include_graphics("immagini/circuito completo con nome.png")
 ```
 
+## PWM acceleratore
 Il ragionamento alla base del circuito sta nell'alimentare il motore con una tensione media che varia in funzione della tensione all'uscita dei sensori. Uno dei modi per ottenere questo risultato è tramite *PWM* (*Pulse with modulation*) con l'*NE555*.
-Guardando la Fig.\ref{fig:schema_PWM}, che schematizza l'IC n°4 della Fig.\ref{fig:circ_tot}, si osserva che modificando la resistenza variabile (chiamata *psensor2*, ossia la resistenza del sensore di pressione) cambia la tensione $V_{acc}$ comune al *control voltage*. Fornendo un'onda quadra al *trig* del circuito integrato, e quindi cambiando la resistenza del sensore, si otterrà un'onda quadra con *duty-cycle* variabile. Più precisamente quando viene premuto il sensore, e quindi quando la resistenza diminuisce e $V_{acc}$ aumenta, cresce il *duty-cycle*. Questa funzione è perfetta per l'acceleratore (in quanto aumentando il *duty-cycle* aumenta la tensione media), ma il freno funziona al contrario, per questo servono due *NE555* (montati allo stesso modo) per i due sensori di pressione, cosicché per il freno basterà negare l'uscita per ottenere la funzione desiderata. L'integrato n°2 è quello che realizza il PWM per il freno. Inviare il segnale in uscita dall'*NE555* direttamente alla porta logica però, a causa dell'elevata impedenza in uscita, riduce l'ampiezza del segnale, perciò per evitare questo problema è stato montato un buffer con il circuito integrato *MCP6292*, in Fig.\ref{fig:circ_tot} è la parte sinistra del numero 3.
+Guardando la Fig.\ref{fig:schema_PWM}, che schematizza l'IC n°4 della Fig.\ref{fig:circ_tot}, si osserva che modificando la resistenza variabile (chiamata *psensor2*, ossia la resistenza del sensore di pressione) cambia la tensione $V_{acc}$ comune al *control voltage*. Fornendo un'onda quadra al *trig* del circuito integrato, e quindi cambiando la resistenza del sensore, si otterrà un'onda quadra con *duty-cycle* variabile. Più precisamente quando viene premuto il sensore, e quindi quando la resistenza diminuisce e $V_{acc}$ aumenta, cresce il *duty-cycle*. Questa funzione è perfetta per l'acceleratore (in quanto aumentando il *duty-cycle* aumenta la tensione media)
 
 ```{r schema_PWM, fig.cap = "Generatore PWM acceleratore"}
 knitr::include_graphics("immagini/schema PWM acceleratore.png")
 ```
+
+
+## PWM freno
+
+Per quanto riguarda il freno, invece, è necessaria la funzione opposta, per questo serve un *NE555* separato che possa realizzare il *PWM* con *duty-cycle* decrescente. Il circuito è identico a quello dell'acceleratore, tuttavia in questo caso bisogna negare l'uscita per ottenere la funzione desiderata (in Fig.\ref{fig:schema_freno} è raffigurato lo schema del circuito del freno corrispondente all'integrato numero 2). Inviare il segnale in uscita dall'*NE555* direttamente alla porta logica però, a causa dell'elevata impedenza in uscita, ridurrebbe l'ampiezza del segnale, perciò per evitare questo problema è stato montato un buffer con il circuito integrato *MCP6292*, in Fig.\ref{fig:circ_tot} è la parte sinistra del numero 3.
+
+Per ridurre la velocità del motore quando un oggetto si avvicina al sensore ad ultrasuoni, invece, la questione è meno complicata. Come spiegato nel capitolo precedente, dal *pin echo* vengono generati degli impulsi più o meno lunghi, a seconda della distanza dell'oggetto. Quando questo è molto vicino, l'onda risultante, nel suo insieme, avrà un *duty-cycle* più vicino a $0\%$, quindi con tensione media molto bassa, come in Fig.\ref{fig:PWM_ultrasuoni}. 
+
+Affinché il motore possa rallentare sia nel caso in cui venga premuto il sensore di pressione, e sia nel caso in cui si avvicini un ostacolo al sensore a ultrasuoni è possibile effettuare un *AND* tra i due PWM. In tal modo quando almeno uno dei due sensori si attiva il *PWM* risultante ha un *duty-cycle* più piccolo.
+
+```{r PWM_freno, fig.cap = "Schema realizzazione PWM del freno"}
+knitr::include_graphics("immagini/AND PWM freno.png")
+```
+
+```{r PWM_ultrasuoni, fig.cap="PWM sensore ultrasuoni con mano vicina"}
+knitr::include_graphics("immagini/PWM sensore ultrasuoni con mano vicina.png")
+```
+
+```{r PWM_freno_tot, fig.cap="Schema complessivo del PWM del freno"}
+knitr::include_graphics("immagini/schema PWM freno totale.png")
+```
+
+
+## Clock per gli NE555
 
 Entrambi i circuiti integrati hanno però bisogno di un *clock* in *input* al trigger, e questo viene realizzato dal primo circuito integrato, di nuovo un multivibratore astabile con l'*NE555*, il cui schema è rappresentato in Fig.\ref{fig:schema_clock}, il clock in uscita da questo integrato è riportato in Fig.\ref{fig:clock}.
 
@@ -115,30 +140,30 @@ knitr::include_graphics("immagini/schema NE555 clock.png")
 knitr::include_graphics("immagini/clock per NE555.png")
 ```
 
-Per ridurre la velocità del motore quando un oggetto si avvicina al sensore ad ultrasuoni, invece, la questione è meno complicata. Come spiegato nel capitolo precedente, dal *pin echo* vengono generati degli impulsi più o meno lunghi, a seconda della distanza dell'oggetto. Quando questo è molto vicino, l'onda risultante, nel suo insieme, avrà un *duty-cycle* più vicino a $0\%$, quindi con tensione media molto bassa, come in Fig.\ref{fig:PWM ultrasuoni}. 
 
-```{r PWM_ultrasuoni, fig.cap="PWM sensore ultrasuoni con mano vicina"}
-knitr::include_graphics("immagini/PWM sensore ultrasuoni con mano vicina.png")
+
+
+
+## Multiplexer
+
+Uno degli ultimi passi per far funzionare correttamente il circuito consiste nel selezionare il *PWM* corretto da mandare al *driver* del motore. Questa funzione può essere svolta da un *multiplexer*: un selettore infatti sceglie quale dei due segnali connettere all'uscita, il circuito è realizzato con l'intero IC *74HC00*, ed è schematizzato in Fig.\ref{fig:mux}.
+
+```{r mux, fig.cap = "Schema multiplexer"}
+knitr::include_graphics("immagini/multiplexer.png")
 ```
+Dallo schema si deduce che se il selettore è al livello logico basso allora viene selezionato l'acceleratore, viceversa se il selettore è al livello alto viene selezionato il freno.
 
-Affinché il motore possa rallentare sia nel caso in cui venga premuto il sensore di pressione, e sia nel caso in cui si avvicini un ostacolo al sensore a ultrasuoni è possibile effettuare un *AND* tra i due PWM. In tal modo quando almeno uno dei due sensori si attiva il PWM risultante ha un *duty-cycle* più piccolo.
-
-```{r PWM_freno, fig.cap = "Schema realizzazione PWM del freno"}
-knitr::include_graphics("immagini/AND PWM freno.png")
-```
+Per realizzare questa operazione basta prelevare la tensione $V_{acc}$ dal partitore con il sensore di pressione e passarla attraverso un comparatore (come mostrato in Fig.\ref{fig:comparatore}) con una soglia poco superiore a $V_{CC}/2$ che renda digitale il segnale. In questo modo quando viene premuto il sensore dell'acceleratore $V_{acc}$ cresce e supera la soglia, così, grazie anche al *multiplexer*, il rispettivo *PWM* viene passato al driver. Invece se non viene premuto quel sensore il segnale connesso al driver è di norma quello del freno.
 
 
 
 
+## Driver
+
+La corrente 
 
 
-
-
-
-
-
-
-
+# Potenza assorbita
 
 
 
